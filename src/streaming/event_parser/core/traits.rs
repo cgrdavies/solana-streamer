@@ -124,7 +124,7 @@ pub trait EventParser: Send + Sync {
                             )
                             .await
                         {
-                            if events.len() > 0 {
+                            if !events.is_empty() {
                                 if let Some(inn) =
                                     inner_instructions.iter().find(|inner_instruction| {
                                         inner_instruction.index == index as u8
@@ -255,7 +255,7 @@ pub trait EventParser: Send + Sync {
                                 )
                                 .await
                             {
-                                if events.len() > 0 {
+                                if !events.is_empty() {
                                     events.iter_mut().for_each(|event| {
                                         let transfer_datas =
                                             parse_transfer_datas_from_next_instructions(
@@ -280,7 +280,7 @@ pub trait EventParser: Send + Sync {
                                 )
                                 .await
                             {
-                                if events.len() > 0 {
+                                if !events.is_empty() {
                                     events.iter_mut().for_each(|event| {
                                         let transfer_datas =
                                             parse_transfer_datas_from_next_instructions(
@@ -301,7 +301,7 @@ pub trait EventParser: Send + Sync {
             }
         }
 
-        if instruction_events.len() > 0 && inner_instruction_events.len() > 0 {
+        if !instruction_events.is_empty() && !inner_instruction_events.is_empty() {
             for instruction_event in &mut instruction_events {
                 for inner_instruction_event in &inner_instruction_events {
                     if instruction_event.id() == inner_instruction_event.id() {
