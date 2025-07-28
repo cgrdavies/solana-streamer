@@ -40,9 +40,9 @@ macro_rules! impl_unified_event {
             }
 
             fn merge(&mut self, other: Box<dyn $crate::streaming::event_parser::core::traits::UnifiedEvent>) {
-                if let Some(e) = other.as_any().downcast_ref::<$struct_name>() {
+                if let Some(_e) = other.as_any().downcast_ref::<$struct_name>() {
                     $(
-                        self.$field = e.$field.clone();
+                        self.$field = _e.$field.clone();
                     )*
                 }
             }
