@@ -47,6 +47,7 @@ impl RaydiumCpmmEventParser {
     fn parse_trade_inner_instruction(
         _data: &[u8],
         _metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         None
     }
@@ -56,6 +57,7 @@ impl RaydiumCpmmEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 13 {
             return None;
@@ -93,6 +95,7 @@ impl RaydiumCpmmEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 13 {
             return None;
@@ -136,6 +139,7 @@ impl EventParser for RaydiumCpmmEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_inner_instruction(
             inner_instruction,
@@ -143,6 +147,7 @@ impl EventParser for RaydiumCpmmEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 
@@ -154,6 +159,7 @@ impl EventParser for RaydiumCpmmEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_instruction(
             instruction,
@@ -162,6 +168,7 @@ impl EventParser for RaydiumCpmmEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 

@@ -67,6 +67,7 @@ pub trait EventParser: Send + Sync {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>>;
 
     /// 从指令中解析事件数据
@@ -78,6 +79,7 @@ pub trait EventParser: Send + Sync {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>>;
 
     /// 从VersionedTransaction中解析指令事件的通用方法
@@ -89,6 +91,7 @@ pub trait EventParser: Send + Sync {
         block_time: Option<Timestamp>,
         accounts: &[Pubkey],
         inner_instructions: &[UiInnerInstructions],
+        log_messages: &Option<Vec<String>>,
     ) -> Result<Vec<Box<dyn UnifiedEvent>>> {
         let mut instruction_events = Vec::new();
         // 获取交易的指令和账户
@@ -117,6 +120,7 @@ pub trait EventParser: Send + Sync {
                                 slot,
                                 block_time,
                                 format!("{}", index),
+                                log_messages,
                             )
                             .await
                         {
@@ -164,6 +168,7 @@ pub trait EventParser: Send + Sync {
                 block_time,
                 &accounts,
                 &vec![],
+                &None,
             )
             .await
             .unwrap_or_else(|_e| vec![]);
@@ -187,9 +192,11 @@ pub trait EventParser: Send + Sync {
 
         let mut address_table_lookups: Vec<Pubkey> = vec![];
         let mut inner_instructions: Vec<UiInnerInstructions> = vec![];
+        let mut log_messages: Option<Vec<String>> = None;
         if meta.err.is_none() {
             inner_instructions = meta.inner_instructions.as_ref().unwrap().clone();
             let loaded_addresses = meta.loaded_addresses.as_ref().unwrap();
+            log_messages = meta.log_messages.clone().into();
             for lookup in &loaded_addresses.writable {
                 address_table_lookups.push(Pubkey::from_str(lookup).unwrap());
             }
@@ -214,6 +221,7 @@ pub trait EventParser: Send + Sync {
                     block_time,
                     &accounts,
                     &inner_instructions,
+                    &log_messages,
                 )
                 .await
                 .unwrap_or_else(|_e| vec![]);
@@ -243,6 +251,7 @@ pub trait EventParser: Send + Sync {
                                     slot,
                                     block_time,
                                     format!("{}.{}", inner_instruction.index, index),
+                                    &log_messages,
                                 )
                                 .await
                             {
@@ -267,6 +276,7 @@ pub trait EventParser: Send + Sync {
                                     slot,
                                     block_time,
                                     format!("{}.{}", inner_instruction.index, index),
+                                    &log_messages,
                                 )
                                 .await
                             {
@@ -365,6 +375,7 @@ pub trait EventParser: Send + Sync {
         slot: Option<u64>,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Result<Vec<Box<dyn UnifiedEvent>>> {
         let slot = slot.unwrap_or(0);
         let events = self.parse_events_from_inner_instruction(
@@ -373,6 +384,7 @@ pub trait EventParser: Send + Sync {
             slot,
             block_time,
             index,
+            log_messages,
         );
         Ok(events)
     }
@@ -385,6 +397,7 @@ pub trait EventParser: Send + Sync {
         slot: Option<u64>,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Result<Vec<Box<dyn UnifiedEvent>>> {
         let slot = slot.unwrap_or(0);
         let events = self.parse_events_from_instruction(
@@ -394,6 +407,7 @@ pub trait EventParser: Send + Sync {
             slot,
             block_time,
             index,
+            log_messages,
         );
         Ok(events)
     }
@@ -424,11 +438,15 @@ pub struct GenericEventParseConfig {
 
 /// 内联指令事件解析器
 pub type InnerInstructionEventParser =
-    fn(data: &[u8], metadata: EventMetadata) -> Option<Box<dyn UnifiedEvent>>;
+    fn(data: &[u8], metadata: EventMetadata, log_messages: &Option<Vec<String>>) -> Option<Box<dyn UnifiedEvent>>;
 
 /// 指令事件解析器
-pub type InstructionEventParser =
-    fn(data: &[u8], accounts: &[Pubkey], metadata: EventMetadata) -> Option<Box<dyn UnifiedEvent>>;
+pub type InstructionEventParser = fn(
+    data: &[u8],
+    accounts: &[Pubkey],
+    metadata: EventMetadata,
+    log_messages: &Option<Vec<String>>,
+) -> Option<Box<dyn UnifiedEvent>>;
 
 /// 通用事件解析器基类
 pub struct GenericEventParser {
@@ -476,6 +494,7 @@ impl GenericEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         let timestamp = block_time.unwrap_or(Timestamp {
             seconds: 0,
@@ -493,7 +512,7 @@ impl GenericEventParser {
             self.program_id,
             index,
         );
-        (config.inner_instruction_parser)(data, metadata)
+        (config.inner_instruction_parser)(data, metadata, log_messages)
     }
 
     /// 通用的指令解析方法
@@ -506,6 +525,7 @@ impl GenericEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         let timestamp = block_time.unwrap_or(Timestamp {
             seconds: 0,
@@ -523,7 +543,7 @@ impl GenericEventParser {
             self.program_id,
             index,
         );
-        (config.instruction_parser)(data, account_pubkeys, metadata)
+        (config.instruction_parser)(data, account_pubkeys, metadata, log_messages)
     }
 }
 
@@ -537,6 +557,7 @@ impl EventParser for GenericEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         let inner_instruction_data = inner_instruction.data.clone();
         let inner_instruction_data_decoded =
@@ -558,6 +579,7 @@ impl EventParser for GenericEventParser {
                         slot,
                         block_time,
                         index.clone(),
+                        log_messages,
                     ) {
                         events.push(event);
                     }
@@ -576,6 +598,7 @@ impl EventParser for GenericEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         let program_id = accounts[instruction.program_id_index as usize];
         if !self.should_handle(&program_id) {
@@ -608,6 +631,7 @@ impl EventParser for GenericEventParser {
                         slot,
                         block_time,
                         index.clone(),
+                        log_messages,
                     ) {
                         events.push(event);
                     }

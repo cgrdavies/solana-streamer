@@ -70,6 +70,7 @@ impl PumpSwapEventParser {
     fn parse_buy_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpSwapBuyEvent>(data) {
             let mut metadata = metadata;
@@ -90,6 +91,7 @@ impl PumpSwapEventParser {
     fn parse_sell_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpSwapSellEvent>(data) {
             let mut metadata = metadata;
@@ -110,6 +112,7 @@ impl PumpSwapEventParser {
     fn parse_create_pool_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpSwapCreatePoolEvent>(data) {
             let mut metadata = metadata;
@@ -130,6 +133,7 @@ impl PumpSwapEventParser {
     fn parse_deposit_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpSwapDepositEvent>(data) {
             let mut metadata = metadata;
@@ -150,6 +154,7 @@ impl PumpSwapEventParser {
     fn parse_withdraw_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpSwapWithdrawEvent>(data) {
             let mut metadata = metadata;
@@ -171,6 +176,7 @@ impl PumpSwapEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 11 {
             return None;
@@ -210,6 +216,7 @@ impl PumpSwapEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 11 {
             return None;
@@ -249,6 +256,7 @@ impl PumpSwapEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 18 || accounts.len() < 11 {
             return None;
@@ -294,6 +302,7 @@ impl PumpSwapEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 24 || accounts.len() < 11 {
             return None;
@@ -332,6 +341,7 @@ impl PumpSwapEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 24 || accounts.len() < 11 {
             return None;
@@ -375,6 +385,7 @@ impl EventParser for PumpSwapEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_inner_instruction(
             inner_instruction,
@@ -382,6 +393,7 @@ impl EventParser for PumpSwapEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 
@@ -393,6 +405,7 @@ impl EventParser for PumpSwapEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_instruction(
             instruction,
@@ -401,6 +414,7 @@ impl EventParser for PumpSwapEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 

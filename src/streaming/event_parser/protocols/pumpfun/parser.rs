@@ -7,6 +7,7 @@ use crate::streaming::event_parser::{
     core::traits::{EventParser, GenericEventParseConfig, GenericEventParser, UnifiedEvent},
     protocols::pumpfun::{discriminators, PumpFunCreateTokenEvent, PumpFunTradeEvent},
 };
+use regex::Regex;
 
 /// PumpFun程序ID
 pub const PUMPFUN_PROGRAM_ID: Pubkey =
@@ -42,6 +43,13 @@ impl PumpFunEventParser {
                 inner_instruction_parser: Self::parse_trade_inner_instruction,
                 instruction_parser: Self::parse_sell_instruction,
             },
+            GenericEventParseConfig {
+                inner_instruction_discriminator: "",
+                instruction_discriminator: &[0; 8],
+                event_type: EventType::Unknown,
+                inner_instruction_parser: Self::parse_log_inner_instruction,
+                instruction_parser: Self::parse_log_instruction,
+            },
         ];
 
         let inner = GenericEventParser::new(PUMPFUN_PROGRAM_ID, ProtocolType::PumpFun, configs);
@@ -53,6 +61,7 @@ impl PumpFunEventParser {
     fn parse_create_token_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpFunCreateTokenEvent>(data) {
             let mut metadata = metadata;
@@ -76,6 +85,7 @@ impl PumpFunEventParser {
     fn parse_trade_inner_instruction(
         data: &[u8],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Ok(event) = borsh::from_slice::<PumpFunTradeEvent>(data) {
             let mut metadata = metadata;
@@ -100,6 +110,7 @@ impl PumpFunEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 11 {
             return None;
@@ -152,6 +163,7 @@ impl PumpFunEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 11 {
             return None;
@@ -187,6 +199,7 @@ impl PumpFunEventParser {
         data: &[u8],
         accounts: &[Pubkey],
         metadata: EventMetadata,
+        _log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if data.len() < 16 || accounts.len() < 11 {
             return None;
@@ -216,6 +229,77 @@ impl PumpFunEventParser {
             ..Default::default()
         }))
     }
+
+    fn parse_log_inner_instruction(
+        _data: &[u8],
+        metadata: EventMetadata,
+        log_messages: &Option<Vec<String>>,
+    ) -> Option<Box<dyn UnifiedEvent>> {
+        if let Some(logs) = log_messages {
+            let re = Regex::new(r"sol_amount: (\d+), token_amount: (\d+)").unwrap();
+            for log in logs {
+                if let Some(captures) = re.captures(log) {
+                    let sol_amount = captures.get(1).unwrap().as_str().parse::<u64>().unwrap();
+                    let token_amount = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+
+                    let mut event = PumpFunTradeEvent {
+                        metadata: metadata.clone(),
+                        sol_amount,
+                        token_amount,
+                        ..Default::default()
+                    };
+
+                    let mut metadata = metadata.clone();
+                    metadata.set_id(format!(
+                        "{}-{}-{}",
+                        metadata.signature,
+                        metadata.index,
+                        "trade_log"
+                    ));
+                    event.metadata = metadata;
+
+                    return Some(Box::new(event));
+                }
+            }
+        }
+        None
+    }
+
+    fn parse_log_instruction(
+        _data: &[u8],
+        _accounts: &[Pubkey],
+        metadata: EventMetadata,
+        log_messages: &Option<Vec<String>>,
+    ) -> Option<Box<dyn UnifiedEvent>> {
+        if let Some(logs) = log_messages {
+            let re = Regex::new(r"sol_amount: (\d+), token_amount: (\d+)").unwrap();
+            for log in logs {
+                if let Some(captures) = re.captures(log) {
+                    let sol_amount = captures.get(1).unwrap().as_str().parse::<u64>().unwrap();
+                    let token_amount = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+
+                    let mut event = PumpFunTradeEvent {
+                        metadata: metadata.clone(),
+                        sol_amount,
+                        token_amount,
+                        ..Default::default()
+                    };
+
+                    let mut metadata = metadata.clone();
+                    metadata.set_id(format!(
+                        "{}-{}-{}",
+                        metadata.signature,
+                        metadata.index,
+                        "trade_log"
+                    ));
+                    event.metadata = metadata;
+
+                    return Some(Box::new(event));
+                }
+            }
+        }
+        None
+    }
 }
 
 #[async_trait::async_trait]
@@ -227,6 +311,7 @@ impl EventParser for PumpFunEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_inner_instruction(
             inner_instruction,
@@ -234,6 +319,7 @@ impl EventParser for PumpFunEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 
@@ -245,6 +331,7 @@ impl EventParser for PumpFunEventParser {
         slot: u64,
         block_time: Option<Timestamp>,
         index: String,
+        log_messages: &Option<Vec<String>>,
     ) -> Vec<Box<dyn UnifiedEvent>> {
         self.inner.parse_events_from_instruction(
             instruction,
@@ -253,6 +340,7 @@ impl EventParser for PumpFunEventParser {
             slot,
             block_time,
             index,
+            log_messages,
         )
     }
 
