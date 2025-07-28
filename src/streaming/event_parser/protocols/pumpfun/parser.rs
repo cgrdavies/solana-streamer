@@ -7,7 +7,7 @@ use crate::streaming::event_parser::{
     core::traits::{EventParser, GenericEventParseConfig, GenericEventParser, UnifiedEvent},
     protocols::pumpfun::{discriminators, PumpFunCreateTokenEvent, PumpFunTradeEvent},
 };
-use regex::Regex;
+use base64::{engine::general_purpose, Engine as _};
 
 /// PumpFun程序ID
 pub const PUMPFUN_PROGRAM_ID: Pubkey =
@@ -236,29 +236,30 @@ impl PumpFunEventParser {
         log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Some(logs) = log_messages {
-            let re = Regex::new(r"sol_amount: (\d+), token_amount: (\d+)").unwrap();
             for log in logs {
-                if let Some(captures) = re.captures(log) {
-                    let sol_amount = captures.get(1).unwrap().as_str().parse::<u64>().unwrap();
-                    let token_amount = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+                if let Some(data_str) = log.strip_prefix("Program data: ") {
+                    if let Ok(decoded_data) = general_purpose::STANDARD.decode(data_str) {
+                        if decoded_data.starts_with(&discriminators::TRADE_EVENT_DISCRIMINATOR) {
+                            let event_data = &decoded_data[8..];
+                            if let Ok(event) =
+                                borsh::from_slice::<PumpFunTradeEvent>(event_data)
+                            {
+                                let mut metadata = metadata.clone();
+                                metadata.set_id(format!(
+                                    "{}-{}-{}-{}",
+                                    metadata.signature,
+                                    event.mint.to_string(),
+                                    event.user.to_string(),
+                                    event.is_buy.to_string()
+                                ));
 
-                    let mut event = PumpFunTradeEvent {
-                        metadata: metadata.clone(),
-                        sol_amount,
-                        token_amount,
-                        ..Default::default()
-                    };
-
-                    let mut metadata = metadata.clone();
-                    metadata.set_id(format!(
-                        "{}-{}-{}",
-                        metadata.signature,
-                        metadata.index,
-                        "trade_log"
-                    ));
-                    event.metadata = metadata;
-
-                    return Some(Box::new(event));
+                                return Some(Box::new(PumpFunTradeEvent {
+                                    metadata,
+                                    ..event
+                                }));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -272,29 +273,30 @@ impl PumpFunEventParser {
         log_messages: &Option<Vec<String>>,
     ) -> Option<Box<dyn UnifiedEvent>> {
         if let Some(logs) = log_messages {
-            let re = Regex::new(r"sol_amount: (\d+), token_amount: (\d+)").unwrap();
             for log in logs {
-                if let Some(captures) = re.captures(log) {
-                    let sol_amount = captures.get(1).unwrap().as_str().parse::<u64>().unwrap();
-                    let token_amount = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+                if let Some(data_str) = log.strip_prefix("Program data: ") {
+                    if let Ok(decoded_data) = general_purpose::STANDARD.decode(data_str) {
+                        if decoded_data.starts_with(&discriminators::TRADE_EVENT_DISCRIMINATOR) {
+                            let event_data = &decoded_data[8..];
+                            if let Ok(event) =
+                                borsh::from_slice::<PumpFunTradeEvent>(event_data)
+                            {
+                                let mut metadata = metadata.clone();
+                                metadata.set_id(format!(
+                                    "{}-{}-{}-{}",
+                                    metadata.signature,
+                                    event.mint.to_string(),
+                                    event.user.to_string(),
+                                    event.is_buy.to_string()
+                                ));
 
-                    let mut event = PumpFunTradeEvent {
-                        metadata: metadata.clone(),
-                        sol_amount,
-                        token_amount,
-                        ..Default::default()
-                    };
-
-                    let mut metadata = metadata.clone();
-                    metadata.set_id(format!(
-                        "{}-{}-{}",
-                        metadata.signature,
-                        metadata.index,
-                        "trade_log"
-                    ));
-                    event.metadata = metadata;
-
-                    return Some(Box::new(event));
+                                return Some(Box::new(PumpFunTradeEvent {
+                                    metadata,
+                                    ..event
+                                }));
+                            }
+                        }
+                    }
                 }
             }
         }
