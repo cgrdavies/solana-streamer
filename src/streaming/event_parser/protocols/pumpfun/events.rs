@@ -104,7 +104,7 @@ impl_unified_event!(
 pub mod discriminators {
     // 事件鉴别器
     pub const CREATE_TOKEN_EVENT: &str = "0xe445a52e51cb9a1d1b72a94ddeeb6376";
-    pub const TRADE_EVENT: &str = "0xe445a52e51cb9a1dbddb7fd34ee661ee";
+    pub const TRADE_EVENT: &str = "0xbddb7fd34ee661ee0935ff3dc5fef11e";
 
     // 指令鉴别器
     pub const CREATE_TOKEN_IX: &[u8] = &[24, 30, 200, 40, 5, 28, 7, 119];
