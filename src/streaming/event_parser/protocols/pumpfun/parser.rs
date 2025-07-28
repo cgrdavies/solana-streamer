@@ -30,23 +30,16 @@ impl PumpFunEventParser {
                 instruction_parser: Self::parse_create_token_instruction,
             },
             GenericEventParseConfig {
-                inner_instruction_discriminator: discriminators::TRADE_EVENT,
+                inner_instruction_discriminator: "",
                 instruction_discriminator: discriminators::BUY_IX,
                 event_type: EventType::PumpFunBuy,
-                inner_instruction_parser: Self::parse_trade_inner_instruction,
-                instruction_parser: Self::parse_buy_instruction,
-            },
-            GenericEventParseConfig {
-                inner_instruction_discriminator: discriminators::TRADE_EVENT,
-                instruction_discriminator: discriminators::SELL_IX,
-                event_type: EventType::PumpFunSell,
-                inner_instruction_parser: Self::parse_trade_inner_instruction,
-                instruction_parser: Self::parse_sell_instruction,
+                inner_instruction_parser: Self::parse_log_inner_instruction,
+                instruction_parser: Self::parse_log_instruction,
             },
             GenericEventParseConfig {
                 inner_instruction_discriminator: "",
-                instruction_discriminator: &[0; 8],
-                event_type: EventType::Unknown,
+                instruction_discriminator: discriminators::SELL_IX,
+                event_type: EventType::PumpFunSell,
                 inner_instruction_parser: Self::parse_log_inner_instruction,
                 instruction_parser: Self::parse_log_instruction,
             },
@@ -73,30 +66,6 @@ impl PumpFunEventParser {
                 event.mint.to_string()
             ));
             Some(Box::new(PumpFunCreateTokenEvent {
-                metadata: metadata,
-                ..event
-            }))
-        } else {
-            None
-        }
-    }
-
-    /// 解析交易事件
-    fn parse_trade_inner_instruction(
-        data: &[u8],
-        metadata: EventMetadata,
-        _log_messages: &Option<Vec<String>>,
-    ) -> Option<Box<dyn UnifiedEvent>> {
-        if let Ok(event) = borsh::from_slice::<PumpFunTradeEvent>(data) {
-            let mut metadata = metadata;
-            metadata.set_id(format!(
-                "{}-{}-{}-{}",
-                metadata.signature,
-                event.mint.to_string(),
-                event.user.to_string(),
-                event.is_buy.to_string()
-            ));
-            Some(Box::new(PumpFunTradeEvent {
                 metadata: metadata,
                 ..event
             }))
@@ -154,78 +123,6 @@ impl PumpFunEventParser {
             bonding_curve: accounts[2],
             associated_bonding_curve: accounts[3],
             user: accounts[7],
-            ..Default::default()
-        }))
-    }
-
-    // 解析买入指令事件
-    fn parse_buy_instruction(
-        data: &[u8],
-        accounts: &[Pubkey],
-        metadata: EventMetadata,
-        _log_messages: &Option<Vec<String>>,
-    ) -> Option<Box<dyn UnifiedEvent>> {
-        if data.len() < 16 || accounts.len() < 11 {
-            return None;
-        }
-        let amount = u64::from_le_bytes(data[0..8].try_into().unwrap());
-        let max_sol_cost = u64::from_le_bytes(data[8..16].try_into().unwrap());
-        let mut metadata = metadata;
-        metadata.set_id(format!(
-            "{}-{}-{}-{}",
-            metadata.signature,
-            accounts[2].to_string(),
-            accounts[6].to_string(),
-            true.to_string()
-        ));
-        Some(Box::new(PumpFunTradeEvent {
-            metadata,
-            fee_recipient: accounts[1],
-            mint: accounts[2],
-            bonding_curve: accounts[3],
-            associated_bonding_curve: accounts[4],
-            associated_user: accounts[5],
-            user: accounts[6],
-            creator_vault: accounts[8],
-            max_sol_cost,
-            amount,
-            is_buy: true,
-            ..Default::default()
-        }))
-    }
-
-    // 解析卖出指令事件
-    fn parse_sell_instruction(
-        data: &[u8],
-        accounts: &[Pubkey],
-        metadata: EventMetadata,
-        _log_messages: &Option<Vec<String>>,
-    ) -> Option<Box<dyn UnifiedEvent>> {
-        if data.len() < 16 || accounts.len() < 11 {
-            return None;
-        }
-        let amount = u64::from_le_bytes(data[0..8].try_into().unwrap());
-        let min_sol_output = u64::from_le_bytes(data[8..16].try_into().unwrap());
-        let mut metadata = metadata;
-        metadata.set_id(format!(
-            "{}-{}-{}-{}",
-            metadata.signature,
-            accounts[2].to_string(),
-            accounts[6].to_string(),
-            false.to_string()
-        ));
-        Some(Box::new(PumpFunTradeEvent {
-            metadata,
-            fee_recipient: accounts[1],
-            mint: accounts[2],
-            bonding_curve: accounts[3],
-            associated_bonding_curve: accounts[4],
-            associated_user: accounts[5],
-            user: accounts[6],
-            creator_vault: accounts[8],
-            min_sol_output,
-            amount,
-            is_buy: false,
             ..Default::default()
         }))
     }
