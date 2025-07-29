@@ -555,22 +555,22 @@ pub trait EventParser: Send + Sync {
         &EMPTY_MAP
     }
     
-    /// Get protocol type
+    /// 获取协议类型（需要实现）
     fn get_protocol_type(&self) -> ProtocolType {
         // Default implementation - parsers should override this
         ProtocolType::PumpFun
     }
     
-    /// Get program ID
+    /// 获取程序ID（需要实现）
     fn get_program_id(&self) -> Pubkey {
         // Default implementation - parsers should override this
         Pubkey::default()
     }
 
-    /// Check if should handle this program ID
+    /// 检查是否应该处理此程序ID
     fn should_handle(&self, program_id: &Pubkey) -> bool;
 
-    /// Get list of supported program IDs
+    /// 获取支持的程序ID列表
     fn supported_program_ids(&self) -> Vec<Pubkey>;
 }
 
