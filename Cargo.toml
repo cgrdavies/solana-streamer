@@ -12,6 +12,10 @@ readme = "README.md"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "test_pumpfun_events"
+path = "test_pumpfun_events.rs"
+
 [dependencies]
 solana-sdk = "2.1.16"
 solana-client = "2.1.16"

@@ -176,6 +176,7 @@ async fn test_pumpfun_direct_transaction_parsing() -> Result<()> {
     assert_eq!(trade_event.bonding_curve.to_string(), "9A5TEByiBsj1RXZfe6cDr3tLn89vXtrZ11QsFWf13Njm");
     assert_eq!(trade_event.associated_bonding_curve.to_string(), "DNvVRTVBPVzQymdBJasyEhycJazS4pLTvpR9XNPADqvN");
     assert_eq!(trade_event.associated_user.to_string(), "BCQfw1AGhiDr4gaFsLoYiUZh9GABSJopsWV5o9AyhZek");
+    // assert_eq!(trade_event.creator_vault.to_string(), "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     assert_eq!(trade_event.creator_vault.to_string(), "ib3XMvvrzqqrzvt2ejXQmToEBjQsaP157xRhKtAAQYj");
     assert_eq!(trade_event.max_sol_cost, 195000000);
     assert_eq!(trade_event.min_sol_output, 0);
