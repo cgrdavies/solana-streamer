@@ -64,6 +64,7 @@ async fn test_bonk_cpi_transaction_parsing() -> Result<()> {
                 seconds: bt / 1000,
                 nanos: ((bt % 1000) * 1_000_000) as i32,
             }),
+            0, // program_received_time_ms for testing
             None,
         )
         .await?;
@@ -143,6 +144,7 @@ async fn test_bonk_direct_transaction_parsing() -> Result<()> {
                 seconds: bt / 1000,
                 nanos: ((bt % 1000) * 1_000_000) as i32,
             }),
+            0, // program_received_time_ms for testing
             None,
         )
         .await?;

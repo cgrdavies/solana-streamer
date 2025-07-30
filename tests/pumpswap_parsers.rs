@@ -63,6 +63,7 @@ async fn test_pumpswap_buy_cpi_transaction_parsing() -> Result<()> {
                 seconds: bt / 1000,
                 nanos: ((bt % 1000) * 1_000_000) as i32,
             }),
+            0, // program_received_time_ms for testing
             None,
         )
         .await?;
@@ -141,6 +142,7 @@ async fn test_pumpswap_sell_cpi_transaction_parsing() -> Result<()> {
                 seconds: bt / 1000,
                 nanos: ((bt % 1000) * 1_000_000) as i32,
             }),
+            0, // program_received_time_ms for testing
             None,
         )
         .await?;
