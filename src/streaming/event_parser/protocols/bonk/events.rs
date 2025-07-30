@@ -114,7 +114,7 @@ impl_unified_event!(
 /// 事件鉴别器常量
 pub mod discriminators {
     // 事件鉴别器
-    pub const TRADE_EVENT: &str = "0xe47da641a85f86a9c615052d3d89c4ac";
+    pub const TRADE_EVENT: &str = "0xe445a52e51cb9a1dbddb7fd34ee661ee";
     pub const POOL_CREATE_EVENT: &str = "0xe445a52e51cb9a1d97d7e20976a173ae";
 
     // 指令鉴别器
