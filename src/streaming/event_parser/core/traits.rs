@@ -503,6 +503,7 @@ pub trait EventParser: Send + Sync {
                                             config.event_type.clone(),
                                             self.get_program_id(),
                                             "log".to_string(),
+                                            0, // program_received_time_ms
                                         ),
                                     ) {
                                         events.push(event);
@@ -531,6 +532,7 @@ pub trait EventParser: Send + Sync {
                                                     config.event_type.clone(),
                                                     self.get_program_id(),
                                                     "log".to_string(),
+                                                    0, // program_received_time_ms
                                                 ),
                                             ) {
                                                 events.push(event);
