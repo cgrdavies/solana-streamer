@@ -753,6 +753,10 @@ impl EventParser for GenericEventParser {
         program_received_time_ms: i64,
         index: String,
     ) -> Vec<Box<dyn UnifiedEvent>> {
+        // Check bounds for program_id_index
+        if instruction.program_id_index as usize >= accounts.len() {
+            return Vec::new();
+        }
         let program_id = accounts[instruction.program_id_index as usize];
         if !self.should_handle(&program_id) {
             return Vec::new();
